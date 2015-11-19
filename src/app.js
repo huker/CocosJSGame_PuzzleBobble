@@ -20,7 +20,7 @@ var StartBgLayer = cc.Layer.extend({
             function(){
                 //cc.log('click')
                 //转换场景到游戏界面
-                cc.director.runScene(new BubbleScene());
+                cc.director.runScene(new cc.TransitionFade(1.5, new BubbleScene(),cc.Color.BLACK));
             }
         );
         startItem.attr({
