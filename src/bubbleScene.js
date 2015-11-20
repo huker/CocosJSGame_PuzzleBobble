@@ -29,7 +29,28 @@ var BubbleLayer = cc.Layer.extend({
         this.createShootBubble(); //射击的泡
         this.createReadyBubble(); //预备的泡
         this.addBubble();
+        this.addEventListener();
         return true;
+    },
+    addEventListener:function(){
+        var that=this;
+        var eventListener=cc.EventListener.create({
+            event:cc.EventListener.MOUSE,
+            onMouseDown:function(event){
+                var pos=event.getLocation();
+                //cc.log("onmousedown:",pos.x,pos.y);
+            },
+            onMouseMove:function(event){
+                var pos=event.getLocation();
+                //cc.log('onmousemove:',pos.x,pos.y);
+                that.onMouseMove(pos);
+            }
+        });
+        cc.eventManager.addListener(eventListener,this);
+    },
+    onMouseMove:function(pos){
+        var radius=Math.atan2(pos.y-game.Shoot_Pos.y,pos.x-game.Shoot_Pos.x); //弧度
+        this.shooter.rotation=90-radius*180/Math.PI;  //角度
     },
     addBubble:function(){
         //提前生成最大的行数 以免产生的时候没有空间
