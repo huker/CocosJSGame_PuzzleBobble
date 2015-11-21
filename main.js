@@ -1,8 +1,6 @@
 //全局定义
 var game=game||{};
 
-
-
 //游戏入口
 cc.game.onStart = function(){
     if(!cc.sys.isNative && document.getElementById("cocosLoading")) //If referenced loading.js, please remove it
@@ -16,3 +14,4 @@ cc.game.onStart = function(){
     }, this);
 };
 cc.game.run();
+
