@@ -1,6 +1,8 @@
 /**
  * Created by hu on 2015/11/18.
  */
+
+//一些游戏定值
 game.Shoot_Pos={x:180,y:80};
 game.Ready_Pos={x:100,y:40};
 
@@ -39,13 +41,26 @@ var BubbleLayer = cc.Layer.extend({
     onExit:function(){
         this.unscheduleUpdate(); //清除
     },
+
+    //飞行开始后发射冷却
+    flyBegin:function(pos){
+        if(!this.flyCold){
+            this.flyCold=true;
+            this.fireBubble.fly(pos);
+        }
+    },
+
     //飞行结束后
     flyEnd:function(){
-        this.fireBubble=this.waitBubble;
+        this.fireBubble=this.waitBubble;  //泡泡换
         this.waitBubble.setPosition(game.Shoot_Pos.x,game.Shoot_Pos.y);
 
         this.createReadyBubble();
+        //冷却激活一下
+        this.flyCold=false;
     },
+
+    //更新判断是否停止了
     update:function(dt){
         if(this.fireBubble&&this.fireBubble.isMoving){
             //this.fireBubble.update();
@@ -75,7 +90,8 @@ var BubbleLayer = cc.Layer.extend({
         cc.eventManager.addListener(eventListener,this);
     },
     onMouseDown:function(pos){
-        this.fireBubble.fly(pos);
+
+        this.flyBegin(pos);
     },
     onMouseMove:function(pos){
         var radius=Math.atan2(pos.y-game.Shoot_Pos.y,pos.x-game.Shoot_Pos.x); //弧度
