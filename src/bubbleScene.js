@@ -2,28 +2,18 @@
  * Created by hu on 2015/11/18.
  */
 
-//一些游戏定值
-game.Shoot_Pos={x:180,y:80};
-game.Ready_Pos={x:100,y:40};
-
-//设置边缘
-game.Bound={
-    LEFT:40,
-    RIGHT:340,
-    TOP:540,
-    DOWN:80
-};
-game.BubbleD=32; //直径
-game.MaxRow=15;  //最大行数
-game.MaxCol=10;  //最大列数
-game.FlySpeed=10;  //泡泡运动速度
 
 var BubbleLayer = cc.Layer.extend({
     fireBubble:null,
     waitBubble:null,
     shooter:null,
     bubblesArr:[],
-    flyCold:false, //发射冷却
+
+    //可碰撞的泡泡
+    collisionBuArr:[],
+
+    //发射冷却
+    flyCold:false,
 
     ctor:function () {
         this._super();
@@ -34,12 +24,36 @@ var BubbleLayer = cc.Layer.extend({
         this.createShootBubble(); //射击的泡
         this.createReadyBubble(); //预备的泡
         this.addBubble();
+        this.checkAllBubbles();
         this.addEventListener();
         this.scheduleUpdate();  //计时器 默认函数是update
         return true;
     },
     onExit:function(){
         this.unscheduleUpdate(); //清除
+    },
+
+    checkAllBubbles:function(){
+        //清空数组
+        this.collisionBuArr.splice(0,this.collisionBuArr.length);
+        for(var i=0;i<game.MaxRow;++i){
+            next:for(var j=0;j<game.MaxCol;++j){
+                var bReach=false;
+                var bubble=this.bubblesArr[i][j];
+                if(bubble){
+                    for(var k=0;k<6;++k){
+                        var pos=bubble.getRoundPos(k);
+                        if(pos){
+                            if(!this.bubblesArr[pos[0]][pos[1]]){
+                                bReach=true;
+                                this.collisionBuArr.push(bubble);
+                                continue next;
+                            }
+                        }
+                    }
+                }
+            }
+        }
     },
 
     //飞行开始后发射冷却
@@ -68,7 +82,24 @@ var BubbleLayer = cc.Layer.extend({
             if(hasStop){
                 this.flyEnd();
             }
+            this.checkCollision(this.fireBubble);
         }
+    },
+
+    checkCollision:function(flyBubble){
+        for(var i=0;i<this.collisionBuArr.length;++i){
+            var checkBubble=this.collisionBuArr[i];
+            if(checkBubble){
+                var r=game.circleCollision({x:flyBubble.x,y:flyBubble.y},{x:checkBubble.x,y:checkBubble.y},game.BubbleD/2,game.BubbleD/2);
+                if(r){
+                    flyBubble.stopFly();
+                    this.flyEnd();
+                    r=true;
+                    break;
+                }
+            }
+        }
+        return r;
     },
 
     //控制事件
@@ -97,49 +128,50 @@ var BubbleLayer = cc.Layer.extend({
         var radius=Math.atan2(pos.y-game.Shoot_Pos.y,pos.x-game.Shoot_Pos.x); //弧度
         this.shooter.rotation=90-radius*180/Math.PI;  //角度
     },
-    addBubble:function(){
+    addBubble:function() {
         //提前生成最大的行数 以免产生的时候没有空间
-        for(var i=0;i<game.MaxRow;++i){
-            this.bubblesArr[i]=[];
+        for (var i = 0; i < game.MaxRow; ++i) {
+            this.bubblesArr[i] = [];
         }
 
         //自定义生成初始的地图
-        //for(var i=0;i<4;++i){
-        //    var offset=i%2 ? game.BubbleD/2 : 0;
-        //    for(var j=0;j<game.MaxCol;++j){
-        //        //限制一下偶数行的最后一个泡
-        //        if(i%2==1&&j==game.MaxCol-1) continue;
-        //
-        //        var type=parseInt(Math.random()*8);
-        //        var x=game.Bound.LEFT+game.BubbleD*j+offset;
-        //        var y=game.Bound.TOP-game.BubbleD*i;
-        //        var bubble=this.addOneBubble(type,x,y);
-        //        bubble.myCol=j;
-        //        bubble.myRow=i;
-        //        this.bubblesArr[i][j]=bubble;
-        //    }
-        //}
+        for (var i = 0; i < 4; ++i) {
+            var offset = i % 2 ? game.BubbleD / 2 : 0;
+            for (var j = 0; j < game.MaxCol; ++j) {
+                //限制一下偶数行的最后一个泡
+                if (i % 2 == 1 && j == game.MaxCol - 1) continue;
 
-        //用定义好的矩阵生成
-        var level1=[
-            [1,3,4,2,5,6],
-            [2,5,3,4,1,5],
-            [0,0,2,3,5,1]
-        ];
-
-        for(var i=0; i<level1.length;++i){
-            var offset=i%2 ? game.BubbleD/2 : 0;
-            for(var j=0;j<level1[i].length;++j){
-
-                var x=game.Bound.LEFT+game.BubbleD*j+offset;
-                var y=game.Bound.TOP-game.BubbleD*i;
-                var bubble=this.addOneBubble(level1[i][j],x,y);
-                bubble.myCol=j;
-                bubble.myRow=i;
-                this.bubblesArr[i][j]=bubble;
+                var type = parseInt(Math.random() * 8);
+                var x = game.Bound.LEFT + game.BubbleD * j + offset;
+                var y = game.Bound.TOP - game.BubbleD * i;
+                var bubble = this.addOneBubble(type, x, y);
+                bubble.myCol = j;
+                bubble.myRow = i;
+                this.bubblesArr[i][j] = bubble;
             }
         }
     },
+
+        //用定义好的矩阵生成
+    //    var level1=[
+    //        [1,3,4,2,5,6],
+    //        [2,5,3,4,1,5],
+    //        [0,0,2,3,5,1]
+    //    ];
+    //
+    //    for(var i=0; i<level1.length;++i){
+    //        var offset=i%2 ? game.BubbleD/2 : 0;
+    //        for(var j=0;j<level1[i].length;++j){
+    //
+    //            var x=game.Bound.LEFT+game.BubbleD*j+offset;
+    //            var y=game.Bound.TOP-game.BubbleD*i;
+    //            var bubble=this.addOneBubble(level1[i][j],x,y);
+    //            bubble.myCol=j;
+    //            bubble.myRow=i;
+    //            this.bubblesArr[i][j]=bubble;
+    //        }
+    //    }
+    //},
     //炮台
     createShooter:function(){
         this.shooter=new cc.Sprite(res.shooter_png);

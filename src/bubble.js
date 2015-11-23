@@ -24,7 +24,38 @@ var Bubble=cc.Sprite.extend({
     stopFly:function(){
         this.isMoving=false;
     },
-
+    //得到该泡泡周围某个方向的泡泡的数组
+    getRoundPos:function(dir){
+        var grid=null;
+        var r=this.myRow;
+        var c=this.myCol;
+        switch (dir){
+            case 0:
+                grid=[r,c-1];
+                break;
+            case 1:
+                grid=[r-1,r%2?c:c-1];
+                break;
+            case 2:
+                grid=[r-1,r%2?c+1:c];
+                break;
+            case 3:
+                grid=[r,c+1];
+                break;
+            case 4:
+                grid=[r+1,r%2?c+1:c];
+                break;
+            case 5:
+                grid=[r+1,r%2?c:c-1];
+                break;
+        }
+        if(grid){
+            if(grid[0]<0 || grid[0]>=game.MaxRow || grid[1]<0 || grid[1]>=game.MaxCol){
+                grid=0;
+            }
+        }
+        return grid;
+    },
     reachBound:function(){
         //新的行列
         var col=Math.round((this.x-game.Bound.LEFT+game.BubbleD/2)/game.BubbleD);

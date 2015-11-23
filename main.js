@@ -1,6 +1,7 @@
 //全局定义
 var game=game||{};
 
+
 //游戏入口
 cc.game.onStart = function(){
     if(!cc.sys.isNative && document.getElementById("cocosLoading")) //If referenced loading.js, please remove it

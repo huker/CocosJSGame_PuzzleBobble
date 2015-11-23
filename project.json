@@ -12,6 +12,7 @@
 
     "jsList" : [
         "src/resource.js",
+        "src/allGame.js",
         "src/app.js",
         "src/bubbleScene.js",
         "src/bubble.js"
