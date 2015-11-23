@@ -81,6 +81,7 @@ var BubbleLayer = cc.Layer.extend({
             var hasStop=this.fireBubble.update();
             if(hasStop){
                 this.flyEnd();
+                this.bubblesArr[this.fireBubble.myRow][this.fireBubble.myCol];
             }
             this.checkCollision(this.fireBubble);
         }
@@ -94,6 +95,8 @@ var BubbleLayer = cc.Layer.extend({
                 if(r){
                     flyBubble.stopFly();
                     this.flyEnd();
+                    this.checkBubNewPos(flyBubble);
+                    this.checkAllBubbles();
                     r=true;
                     break;
                 }
@@ -101,7 +104,34 @@ var BubbleLayer = cc.Layer.extend({
         }
         return r;
     },
+    //修正坐标
+    checkBubNewPos:function(bubble){
+        //计算正确的行列
+        var row=parseInt((game.Bound.TOP+game.BubbleD/2-bubble.y)/game.BubbleD);
 
+        var offset=row%2? -game.BubbleD/2 : 0;
+        var dx=bubble.x-game.Bound.LEFT+offset;
+        var col;
+        if(dx<0){
+            col=0;
+        }else if(dx>game.BubbleD*game.MaxCol){
+            col=game.MaxCol;
+        }else{
+            col=Math.round(dx/game.BubbleD);
+        }
+        bubble.myRow=row;
+        bubble.myCol=col;
+
+        //根据行列修正坐标
+        var offset=row%2?game.BubbleD/2:0;
+        var x=game.Bound.LEFT+game.BubbleD*col+offset;
+        var y=game.Bound.TOP-game.BubbleD*row;
+
+        bubble.x=x;
+        bubble.y=y;
+
+        this.bubblesArr[row][col]=bubble;
+    },
     //控制事件
     addEventListener:function(){
         var that=this;
