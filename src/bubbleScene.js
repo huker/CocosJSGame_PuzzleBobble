@@ -41,6 +41,7 @@ var BubbleLayer = cc.Layer.extend({
                 var bReach=false;
                 var bubble=this.bubblesArr[i][j];
                 if(bubble){
+                    bubble.isMark=false;
                     for(var k=0;k<6;++k){
                         var pos=bubble.getRoundPos(k);
                         if(pos){
@@ -81,7 +82,7 @@ var BubbleLayer = cc.Layer.extend({
             var hasStop=this.fireBubble.update();
             if(hasStop){
                 this.flyEnd();
-                this.bubblesArr[this.fireBubble.myRow][this.fireBubble.myCol];
+                this.bubblesArr[this.fireBubble.myRow][this.fireBubble.myCol]=this.fireBubble;
             }
             this.checkCollision(this.fireBubble);
         }
@@ -96,6 +97,9 @@ var BubbleLayer = cc.Layer.extend({
                     flyBubble.stopFly();
                     this.flyEnd();
                     this.checkBubNewPos(flyBubble);
+                    //判断消除
+                    this.checkElimate(flyBubble);
+                    //所有判断结束 重置数组
                     this.checkAllBubbles();
                     r=true;
                     break;
@@ -104,6 +108,45 @@ var BubbleLayer = cc.Layer.extend({
         }
         return r;
     },
+
+    //检测消除
+    checkElimate:function(bubble){
+        //自己先放进去 初始化
+        bubble.isMark=true;
+        var elemateArr=[ bubble ];
+        var that=this;
+
+        function check6Round(bubble){
+            for(var i=0;i<6;++i){
+                var pos=bubble.getRoundPos(i);
+                if(pos){
+                    var roundBub=that.bubblesArr[pos[0]][pos[1]];
+                    //存在并且没被标记
+                    var bSame=(roundBub && !roundBub.isMark)?bubble.type==roundBub.type:false;
+                    if(bSame){
+                        cc.log(roundBub);
+                        roundBub.isMark=true;
+                        elemateArr.push(roundBub);
+                        check6Round(roundBub);   //递归调用
+                    }
+                }
+            }
+        }
+        check6Round(bubble);
+        if(elemateArr.length>=3){
+            //可以消除
+            for(var i=0;i<elemateArr.length;++i){
+                cc.log(elemateArr[i]);
+                var bub=elemateArr[i];
+                //清除数组中的
+                this.bubblesArr[bub.myRow][bub.myCol]=0;
+                //清除显示列表里的
+                bub.removeFromParent(true);
+
+            }
+        }
+    },
+
     //修正坐标
     checkBubNewPos:function(bubble){
         //计算正确的行列
@@ -130,7 +173,11 @@ var BubbleLayer = cc.Layer.extend({
         bubble.x=x;
         bubble.y=y;
 
-        this.bubblesArr[row][col]=bubble;
+        if(this.bubblesArr[row][col]){
+            cc.log('error');
+        }else{
+            this.bubblesArr[row][col]=bubble;
+        }
     },
     //控制事件
     addEventListener:function(){
