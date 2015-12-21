@@ -24,6 +24,11 @@ var Bubble=cc.Sprite.extend({
     stopFly:function(){
         this.isMoving=false;
     },
+    fall:function(){
+        this.scheduleUpdate();
+        this.isMoving=true;
+        this.myFlyRadius=1.5*Math.PI;
+    },
     //得到该泡泡周围某个方向的泡泡的数组
     getRoundPos:function(dir){
         var grid=null;
@@ -89,6 +94,10 @@ var Bubble=cc.Sprite.extend({
             this.reachBound();
             bStop=true;
             return bStop;
+        }else if(dy<0 && this.y+dy<game.Bound.DOWN){
+            this.stopFly();
+            this.removeFromParent(true);
+            this.unscheduleUpdate();
         }
 
         this.x+=dx;

@@ -42,6 +42,7 @@ var BubbleLayer = cc.Layer.extend({
                 var bubble=this.bubblesArr[i][j];
                 if(bubble){
                     bubble.isMark=false;
+                    bubble.status='';
                     for(var k=0;k<6;++k){
                         var pos=bubble.getRoundPos(k);
                         if(pos){
@@ -99,6 +100,7 @@ var BubbleLayer = cc.Layer.extend({
                     this.checkBubNewPos(flyBubble);
                     //判断消除
                     this.checkElimate(flyBubble);
+                    this.checkAloneBubble();
                     //所有判断结束 重置数组
                     this.checkAllBubbles();
                     r=true;
@@ -113,7 +115,7 @@ var BubbleLayer = cc.Layer.extend({
     checkElimate:function(bubble){
         //自己先放进去 初始化
         bubble.isMark=true;
-        var elemateArr=[ bubble ];
+        var elimateArr=[ bubble ];
         var that=this;
 
         function check6Round(bubble){
@@ -126,18 +128,18 @@ var BubbleLayer = cc.Layer.extend({
                     if(bSame){
                         cc.log(roundBub);
                         roundBub.isMark=true;
-                        elemateArr.push(roundBub);
+                        elimateArr.push(roundBub);
                         check6Round(roundBub);   //递归调用
                     }
                 }
             }
         }
         check6Round(bubble);
-        if(elemateArr.length>=3){
+        if(elimateArr.length>=3){
             //可以消除
-            for(var i=0;i<elemateArr.length;++i){
-                cc.log(elemateArr[i]);
-                var bub=elemateArr[i];
+            for(var i=0;i<elimateArr.length;++i){
+                cc.log(elimateArr[i]);
+                var bub=elimateArr[i];
                 //清除数组中的
                 this.bubblesArr[bub.myRow][bub.myCol]=0;
                 //清除显示列表里的
@@ -147,6 +149,43 @@ var BubbleLayer = cc.Layer.extend({
         }
     },
 
+    //检测落空泡泡
+    //先遍历第0行 标记fix 然后递归
+    checkAloneBubble:function(){
+        var that=this;
+        for(var i=0;i<game.MaxCol;++i){
+            var row0Bub=this.bubblesArr[0][i];
+            row0Bub.status='fix';
+            //status是自定义 动态添加的属性
+            if(row0Bub){
+                row0Bub.status='fix';
+                setBubbleFix(row0Bub);
+            }
+        }
+        function setBubbleFix(bubble){
+            for(var i=0;i<6;++i){
+                var pos=bubble.getRoundPos(i);
+                if(pos){
+                    var nextBub=that.bubblesArr[pos[0]][pos[1]];
+                    if(nextBub && nextBub.status!='fix'){
+                        nextBub.status='fix';
+                        setBubbleFix(nextBub);
+                    }
+
+                }
+            }
+        }
+
+        for(var i=0;i<game.MaxRow;++i){
+            for(var j=0;j<game.MaxCol;++j){
+                var bub=this.bubblesArr[i][j];
+                if(bub&&bub.status!='fix'){
+                    this.bubblesArr[bub.myRow][bub.myCol]=0;
+                    bub.fall();
+                }
+            }
+        }
+    },
     //修正坐标
     checkBubNewPos:function(bubble){
         //计算正确的行列
